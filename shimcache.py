@@ -6,6 +6,7 @@ import binascii
 import datetime
 import struct
 import argparse
+import re
 
 csv.field_size_limit(sys.maxsize)
 # https://github.com/mandiant/ShimCacheParser/blob/master/ShimCacheParser.py
@@ -35,12 +36,17 @@ def parse_file(infile,outfile=None):
                         path = io.BytesIO(data[pathOffset:pathOffset+cePathSize]).read().decode('utf-16le','replace')#.encode('utf-8')
                         lowDatetime, highDatetime = struct.unpack("<LL",data[dateOffset:dateOffset+8])
                         lastModified = convert_filetime(lowDatetime,highDatetime)
+                        m = re.search('[^\\\]+$',path)
+                        exe_name = ''
+                        if m:
+                            exe_name = m.group()
+                        print(exe_name)
                         if outfile:
                             with open(outfile,'a') as f2:
                                 writer = csv.writer(f2)
-                                writer.writerow([row['host_hostname'],lastModified,path])
+                                writer.writerow([row['host_hostname'],lastModified,path,exe_name])
                         else:
-                            print('\t'.join([row['host_hostname'],str(lastModified),path]))
+                            print('\t'.join([row['host_hostname'],str(lastModified),path,exe_name]))
             except:
                 pass
 
